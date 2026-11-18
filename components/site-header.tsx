@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { authClient } from "@/lib/auth-client"
+import { authClient, useSession } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import {
   NavigationMenu,
@@ -39,6 +39,7 @@ const navLinks = [
   { label: "Contact Us", href: "/contact" },
   { label: "How It Works", href: "/how-it-works" },
 ]
+
 
 function BrandLogo({
   className,
@@ -246,6 +247,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-[#E4E9F2] bg-white/95 font-display backdrop-blur-md">
       <div className="mx-auto flex h-[72px] w-full max-w-[1920px] items-center gap-4 px-4 sm:px-6 lg:h-[96px] lg:px-10">
         <BrandLogo />
+        {session?.user ? <span>Welcome, {session.user.name}!</span> : null}
 
         <NavigationMenu className="hidden max-w-none flex-1 justify-center xl:flex">
           <NavigationMenuList className="gap-0">
