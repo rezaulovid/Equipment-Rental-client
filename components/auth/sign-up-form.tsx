@@ -10,12 +10,21 @@ import {
   Image as ImageIcon,
   Lock,
   Mail,
+  ShieldCheck,
+  Store,
   User,
+  UserRound,
   X,
+  type LucideIcon,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { authClient } from "@/lib/auth-client"
+import {
+  DEFAULT_USER_ROLE,
+  isUserRole,
+  type UserRole,
+} from "@/lib/user-role"
 import { Button } from "@/components/ui/button"
 import {
   AuthField,
@@ -29,6 +38,7 @@ import {
 export type SignUpValues = {
   name: string
   email: string
+  role: UserRole
   photoUrl: string
   password: string
 }
@@ -39,9 +49,36 @@ type SignUpFormProps = {
   error?: string | null
 }
 
+const accountTypes: {
+  value: UserRole
+  label: string
+  description: string
+  icon: LucideIcon
+}[] = [
+  {
+    value: "customer",
+    label: "Customer",
+    description: "I want to browse and rent equipment.",
+    icon: UserRound,
+  },
+  {
+    value: "owner",
+    label: "Owner",
+    description: "I want to list and rent out my equipment.",
+    icon: Store,
+  },
+  {
+    value: "admin",
+    label: "Admin",
+    description: "I manage the RentPro marketplace.",
+    icon: ShieldCheck,
+  },
+]
+
 const initialValues: SignUpValues = {
   name: "",
   email: "",
+  role: DEFAULT_USER_ROLE,
   photoUrl: "",
   password: "",
 }
@@ -62,10 +99,23 @@ export function SignUpForm({
     { label: "One lowercase letter", met: /[a-z]/.test(values.password) },
   ]
 
+  const selectedAccountType =
+    accountTypes.find((option) => option.value === values.role) ??
+    accountTypes[0]
+
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target
 
     setValues((current) => ({ ...current, [name]: value }))
+    setNotice(null)
+  }
+
+  function handleRoleChange(event: ChangeEvent<HTMLInputElement>) {
+    const { value } = event.target
+
+    if (!isUserRole(value)) return
+
+    setValues((current) => ({ ...current, role: value }))
     setNotice(null)
   }
 
@@ -77,6 +127,7 @@ export function SignUpForm({
     const payload: SignUpValues = {
       name: values.name.trim(),
       email: values.email.trim(),
+      role: values.role,
       photoUrl: values.photoUrl.trim(),
       password: values.password,
     }
@@ -111,6 +162,47 @@ export function SignUpForm({
           Fill in the details to get started
         </p>
       </header>
+      
+<fieldset className="space-y-2">
+          <legend className="block text-[13.5px] font-semibold text-[#071D49]">
+            Account Type
+          </legend>
+          <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-[#F1F5F9] p-1">
+            {accountTypes.map((option) => {
+              const selected = values.role === option.value
+
+              return (
+                <label
+                  key={option.value}
+                  className={cn(
+                    "flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[10px] px-2 py-2.5 text-center transition-colors outline-none focus-within:ring-2 focus-within:ring-[#FF6B00]/40",
+                    selected
+                      ? "bg-[#071D49] text-white shadow-sm"
+                      : "text-[#41536E] hover:bg-white"
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="role"
+                    value={option.value}
+                    checked={selected}
+                    onChange={handleRoleChange}
+                    className="sr-only"
+                  />
+                  <option.icon className="size-4" aria-hidden="true" />
+                  <span className="text-[12.5px] leading-none font-semibold">
+                    {option.label}
+                  </span>
+                </label>
+              )
+            })}
+          </div>
+          <p className="text-xs leading-5 text-[#7B8AA3]">
+            {selectedAccountType.description}
+          </p>
+        </fieldset>
+
+
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4.5">
         <AuthField id="sign-up-name" label="Full Name">
@@ -140,6 +232,8 @@ export function SignUpForm({
             onChange={handleChange}
           />
         </AuthField>
+
+        
 
         <AuthField
           id="sign-up-photo"
@@ -272,6 +366,7 @@ export function SignUpPageClient() {
         email: data.email,
         password: data.password,
         image: data.photoUrl || undefined,
+        role: data.role,
         callbackURL: "/",
       })
 

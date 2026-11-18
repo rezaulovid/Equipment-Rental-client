@@ -1,6 +1,9 @@
 import { betterAuth } from "better-auth"
 import { MongoClient } from "mongodb"
 import { mongodbAdapter } from "@better-auth/mongo-adapter"
+
+import { DEFAULT_USER_ROLE, isUserRole, USER_ROLES } from "@/lib/user-role"
+
 const client = new MongoClient(process.env.BETTER_AUTH_DB_URI as string)
 const db = client.db("rentalAdmindb")
 
@@ -10,15 +13,37 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-user: {
-        additionalFields: {
-            role: {
-                type: ["admin","Owner"],
-                input: true,
-                defaultValue: "seeker",
+  user: {
+    additionalFields: {
+      role: {
+        type: [...USER_ROLES],
+        required: false,
+        input: true,
+        defaultValue: DEFAULT_USER_ROLE,
+        validator: {
+          input: {
+            "~standard": {
+              version: 1,
+              vendor: "rentpro",
+              validate(value: unknown) {
+                if (isUserRole(value)) {
+                  return { value }
+                }
+
+                return {
+                  issues: [
+                    {
+                      message: `Role must be one of: ${USER_ROLES.join(", ")}.`,
+                    },
+                  ],
+                }
+              },
             },
           },
         },
+      },
+    },
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
