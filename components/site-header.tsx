@@ -2,18 +2,20 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import {
-  BriefcaseBusiness,
+  Cloud,
+  LayoutDashboard,
   LogIn,
+  LogOut,
   Menu,
   Search,
-  ShieldCheck,
   UserPlus,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { authClient } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import {
   NavigationMenu,
@@ -64,38 +66,70 @@ function BrandLogo({
   )
 }
 
-function DemoAdminButton({ className }: { className?: string }) {
+function DashboardButton({ className }: { className?: string }) {
   return (
     <Button
       variant="outline"
       size="lg"
+      render={<Link href="/dashboard" />}
+      nativeButton={false}
       className={cn(
         "h-[42px] rounded-full border-[#071D49]/15 bg-[#F1F5FB] px-4.5 text-[15px] font-semibold text-[#071D49] shadow-xs hover:border-[#071D49]/25 hover:bg-[#E7EEF8] hover:text-[#071D49]",
         className
       )}
     >
-      <ShieldCheck className="size-4" strokeWidth={2.3} aria-hidden="true" />
-      Demo Admin
-    </Button>
-  )
-}
-
-function DemoOwnerButton({ className }: { className?: string }) {
-  return (
-    <Button
-      variant="outline"
-      size="lg"
-      className={cn(
-        "h-[42px] rounded-full border-[#FF6B00]/25 bg-[#FFF4EA] px-4.5 text-[15px] font-semibold text-[#D95F00] shadow-xs hover:border-[#FF6B00]/35 hover:bg-[#FFE9D6] hover:text-[#D95F00]",
-        className
-      )}
-    >
-      <BriefcaseBusiness
+      <LayoutDashboard
         className="size-4"
         strokeWidth={2.3}
         aria-hidden="true"
       />
-      Demo Owner
+      Dashboard
+    </Button>
+  )
+}
+
+function SaasButton({ className }: { className?: string }) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon-lg"
+      type="button"
+      aria-label="SaaS"
+      title="SaaS"
+      className={cn(
+        "size-10 rounded-full text-[#071D49] hover:bg-[#F1F5FB]",
+        className
+      )}
+    >
+      <Cloud className="size-[22px]" strokeWidth={2.3} aria-hidden="true" />
+    </Button>
+  )
+}
+
+function LogoutButton({
+  className,
+  onClick,
+  disabled,
+}: {
+  className?: string
+  onClick: () => void
+  disabled?: boolean
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon-lg"
+      type="button"
+      aria-label="Log out"
+      title="Log out"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "size-10 rounded-full text-[#071D49] hover:bg-[#F1F5FB] hover:text-[#D95F00] disabled:opacity-60",
+        className
+      )}
+    >
+      <LogOut className="size-[22px]" strokeWidth={2.3} aria-hidden="true" />
     </Button>
   )
 }
@@ -105,6 +139,8 @@ function LoginButton({ className }: { className?: string }) {
     <Button
       variant="ghost"
       size="lg"
+      render={<Link href="/sign-in" />}
+      nativeButton={false}
       className={cn(
         "h-[42px] rounded-full px-4.5 text-[15px] font-semibold text-[#071D49] hover:bg-[#F1F5FB] hover:text-[#071D49]",
         className
@@ -120,6 +156,8 @@ function RegisterButton({ className }: { className?: string }) {
   return (
     <Button
       size="lg"
+      render={<Link href="/sign-up" />}
+      nativeButton={false}
       className={cn(
         "h-[42px] rounded-full bg-[#FF6B00] px-5 text-[15px] font-semibold text-white shadow-sm hover:bg-[#E85F00]",
         className
@@ -171,7 +209,35 @@ function MenuButton({
 
 export function SiteHeader() {
   const pathname = usePathname()
+  const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+  const { data: session, refetch } = authClient.useSession()
+
+  const isLoggedIn = Boolean(session?.user)
+
+  async function handleLogout() {
+    if (isSigningOut) return
+
+    setIsSigningOut(true)
+
+    try {
+      const { error } = await authClient.signOut()
+
+      if (error) {
+        console.error("Logout error:", error)
+        return
+      }
+
+      await refetch()
+      setMobileOpen(false)
+      router.refresh()
+    } catch (error) {
+      console.error("Logout error:", error)
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href)
@@ -213,17 +279,28 @@ export function SiteHeader() {
         </NavigationMenu>
 
         <div className="ml-auto hidden items-center gap-2.5 min-[1660px]:flex">
-          <DemoAdminButton />
-          <DemoOwnerButton />
+          <DashboardButton />
+          <SaasButton />
+          {isLoggedIn ? (
+            <LogoutButton onClick={handleLogout} disabled={isSigningOut} />
+          ) : null}
           <SearchButton />
-          <LoginButton className="ml-1" />
-          <RegisterButton />
+          {!isLoggedIn ? (
+            <>
+              <LoginButton className="ml-1" />
+              <RegisterButton />
+            </>
+          ) : null}
         </div>
 
         <div className="ml-auto hidden items-center gap-2 max-[1659px]:xl:flex">
           <SearchButton />
-          <LoginButton />
-          <RegisterButton />
+          {!isLoggedIn ? (
+            <>
+              <LoginButton />
+              <RegisterButton />
+            </>
+          ) : null}
           <MenuButton
             onClick={() => setMobileOpen(true)}
             expanded={mobileOpen}
@@ -272,15 +349,24 @@ export function SiteHeader() {
             </nav>
 
             <SheetFooter className="gap-3 border-t border-[#E4E9F2] px-5 py-5">
-              <div className="flex flex-col gap-2.5">
-                <DemoAdminButton className="h-11 w-full" />
-                <DemoOwnerButton className="h-11 w-full" />
+              <div className="flex items-center gap-2.5">
+                <DashboardButton className="h-11 flex-1" />
+                <SaasButton className="size-11" />
+                {isLoggedIn ? (
+                  <LogoutButton
+                    className="size-11"
+                    onClick={handleLogout}
+                    disabled={isSigningOut}
+                  />
+                ) : null}
               </div>
 
-              <div className="flex flex-col gap-2.5 border-t border-[#E4E9F2] pt-4">
-                <LoginButton className="h-11 w-full bg-[#F1F5FB]" />
-                <RegisterButton className="h-11 w-full" />
-              </div>
+              {!isLoggedIn ? (
+                <div className="flex flex-col gap-2.5 border-t border-[#E4E9F2] pt-4">
+                  <LoginButton className="h-11 w-full bg-[#F1F5FB]" />
+                  <RegisterButton className="h-11 w-full" />
+                </div>
+              ) : null}
             </SheetFooter>
           </SheetContent>
         </Sheet>

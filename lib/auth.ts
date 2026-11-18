@@ -1,8 +1,8 @@
 import { betterAuth } from "better-auth"
 import { MongoClient } from "mongodb"
 import { mongodbAdapter } from "@better-auth/mongo-adapter"
-const client = new MongoClient("mongodb://localhost:27017/database")
-const db = client.db("equipment-rental-cleintdb")
+const client = new MongoClient(process.env.BETTER_AUTH_DB_URI as string)
+const db = client.db("rentalAdmindb")
 
 export const auth = betterAuth({
   //...
@@ -10,6 +10,15 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+user: {
+        additionalFields: {
+            role: {
+                type: ["admin","Owner"],
+                input: true,
+                defaultValue: "seeker",
+            },
+          },
+        },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
