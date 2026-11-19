@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { authClient, useSession } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import {
   NavigationMenu,
@@ -31,16 +31,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-
-const navLinks = [
-  { label: "Home", href: "/" },
-  { label: "All Equipment", href: "/equipment" },
-  { label: "About Us", href: "/about" },
-  { label: "Contact Us", href: "/contact" },
-  { label: "How It Works", href: "/how-it-works" },
-]
-
-
 function BrandLogo({
   className,
   onClick,
@@ -214,6 +204,13 @@ export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const { data: session, refetch } = authClient.useSession()
+  const navLinks = [
+    { label: "Home", href: "/" },
+    { label: "All Equipment", href: "/equipment" },
+    { label: "About Us", href: "/about" },
+    { label: "Contact Us", href: "/contact" },
+    { label: "Dashboard", href: `/dashboard/${session?.user.role || "customer"}` },
+  ]
 
   const isLoggedIn = Boolean(session?.user)
 

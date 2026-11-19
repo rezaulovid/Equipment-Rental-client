@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth"
+import { jwt } from "better-auth/plugins"
 import { MongoClient } from "mongodb"
 import { mongodbAdapter } from "@better-auth/mongo-adapter"
 
@@ -41,9 +42,26 @@ export const auth = betterAuth({
             },
           },
         },
+        phone: {
+          type: "string",
+          required: false,
+          input: true,
+          defaultValue: "",
+        },
+        address: {
+          type: "string",
+          required: false,
+          input: true,
+          defaultValue: "",
+        },
       },
     },
   },
+  /**
+   * Issues the access token the Express API verifies with `jose`. The client
+   * fetches it from `/api/auth/token` and sends it as a Bearer token.
+   */
+  plugins: [jwt()],
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
