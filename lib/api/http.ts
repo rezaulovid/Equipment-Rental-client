@@ -16,6 +16,21 @@ type ApiPayload<T> = {
   message?: string
 }
 
+async function parseResponse<T>(response: Response): Promise<T> {
+  const payload = (await response
+    .json()
+    .catch(() => null)) as ApiPayload<T> | null
+
+  if (!response.ok || !payload || payload.success === false) {
+    throw new ApiError(
+      response.status,
+      payload?.message ?? "Unable to complete the request."
+    )
+  }
+
+  return payload.data as T
+}
+
 let cachedToken: { value: string; expiresAt: number } | null = null
 
 /**
@@ -80,16 +95,26 @@ export async function apiRequest<T>(
     return apiRequest<T>(path, init, false)
   }
 
-  const payload = (await response
-    .json()
-    .catch(() => null)) as ApiPayload<T> | null
+  return parseResponse<T>(response)
+}
 
-  if (!response.ok || !payload || payload.success === false) {
-    throw new ApiError(
-      response.status,
-      payload?.message ?? "Unable to complete the request."
-    )
-  }
+/**
+ * Calls a public Express endpoint (approved catalogue data) without an access
+ * token. Used by the equipment browse and details pages before sign in.
+ */
+export async function publicApiRequest<T>(
+  path: string,
+  init: RequestInit = {}
+): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    cache: "no-store",
+    headers: {
+      Accept: "application/json",
+      ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...(init.headers ?? {}),
+    },
+  })
 
-  return payload.data as T
+  return parseResponse<T>(response)
 }
