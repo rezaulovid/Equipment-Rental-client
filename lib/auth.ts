@@ -8,6 +8,8 @@ import { DEFAULT_USER_ROLE, isUserRole, USER_ROLES } from "@/lib/user-role"
 const client = new MongoClient(process.env.BETTER_AUTH_DB_URI as string)
 const db = client.db("rentalAdmindb")
 
+export { client, db }
+
 export const auth = betterAuth({
   //...
 
@@ -42,18 +44,18 @@ export const auth = betterAuth({
             },
           },
         },
-        phone: {
-          type: "string",
-          required: false,
-          input: true,
-          defaultValue: "",
-        },
-        address: {
-          type: "string",
-          required: false,
-          input: true,
-          defaultValue: "",
-        },
+      },
+      phone: {
+        type: "string",
+        required: false,
+        input: true,
+        defaultValue: "",
+      },
+      address: {
+        type: "string",
+        required: false,
+        input: true,
+        defaultValue: "",
       },
     },
   },

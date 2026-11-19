@@ -25,36 +25,41 @@ type CancelState =
 function PaymentCancelledContent() {
   const searchParams = useSearchParams()
   const bookingId = searchParams.get("booking_id")?.trim() ?? ""
-  const [state, setState] = useState<CancelState>({ phase: "loading" })
+  const [state, setState] = useState<CancelState>(() =>
+    bookingId ? { phase: "loading" } : { phase: "missing" }
+  )
 
   useEffect(() => {
     if (!bookingId) {
-      setState({ phase: "missing" })
       return
     }
 
     let active = true
-    setState({ phase: "loading" })
+    const timer = window.setTimeout(() => {
+      if (!active) return
+      setState({ phase: "loading" })
 
-    customerApi
-      .cancelBooking(bookingId)
-      .then(() => {
-        if (active) setState({ phase: "done" })
-      })
-      .catch((error) => {
-        if (active) {
-          setState({
-            phase: "error",
-            message:
-              error instanceof Error
-                ? error.message
-                : "The booking could not be released.",
-          })
-        }
-      })
+      customerApi
+        .cancelBooking(bookingId)
+        .then(() => {
+          if (active) setState({ phase: "done" })
+        })
+        .catch((error) => {
+          if (active) {
+            setState({
+              phase: "error",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "The booking could not be released.",
+            })
+          }
+        })
+    }, 0)
 
     return () => {
       active = false
+      window.clearTimeout(timer)
     }
   }, [bookingId])
 

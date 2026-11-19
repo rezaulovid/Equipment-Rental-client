@@ -33,6 +33,10 @@ async function parseResponse<T>(response: Response): Promise<T> {
 
 let cachedToken: { value: string; expiresAt: number } | null = null
 
+function apiUrl(path: string) {
+  return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`
+}
+
 /**
  * Reads the BetterAuth access token from the same-origin auth route. The
  * cookie is sent automatically, so no client-side secret is involved.
@@ -67,7 +71,7 @@ export function clearTokenCache() {
   cachedToken = null
 }
 
-/** Calls the Express API with the current access token attached. */
+/** Calls the rental API with the current access token attached. */
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
@@ -79,7 +83,7 @@ export async function apiRequest<T>(
     throw new ApiError(401, "Your session has expired. Please sign in again.")
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     cache: "no-store",
     headers: {
@@ -99,14 +103,14 @@ export async function apiRequest<T>(
 }
 
 /**
- * Calls a public Express endpoint (approved catalogue data) without an access
+ * Calls a public rental endpoint (approved catalogue data) without an access
  * token. Used by the equipment browse and details pages before sign in.
  */
 export async function publicApiRequest<T>(
   path: string,
   init: RequestInit = {}
 ): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(apiUrl(path), {
     ...init,
     cache: "no-store",
     headers: {

@@ -4,6 +4,18 @@ import type {
   EquipmentAvailability,
   FavoriteEquipment,
 } from "@/lib/types/customer"
+import type { RentalType } from "@/lib/types/admin"
+
+export type CatalogFilters = {
+  q?: string
+  category?: string
+  location?: string
+  rentalType?: RentalType
+  minPrice?: string
+  maxPrice?: string
+  availability?: "available" | "unavailable"
+  sort?: "price-asc" | "price-desc" | "recent"
+}
 
 function queryString(params: Record<string, string | undefined>) {
   const search = new URLSearchParams()
@@ -18,7 +30,7 @@ function queryString(params: Record<string, string | undefined>) {
 
 /** Public catalogue reads — no token required. */
 export const catalogApi = {
-  list: (filters: { q?: string; category?: string } = {}) =>
+  list: (filters: CatalogFilters = {}) =>
     publicApiRequest<CatalogEquipment[]>(
       `/api/equipment${queryString(filters)}`
     ),

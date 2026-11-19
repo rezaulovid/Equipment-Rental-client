@@ -1,21 +1,49 @@
-# Next.js template
+# RentPro Equipment Rental Platform
 
-This is a Next.js template with shadcn/ui.
+RentPro is a responsive equipment rental marketplace built with Next.js. Customers
+can browse approved listings, save favorites, book equipment, and pay through
+Stripe. Owners manage listings and rental requests, while administrators manage
+users, approvals, rentals, and platform analytics.
 
-## Adding components
+## Features
 
-To add components to your app, run the following command:
+- Better Auth email/password and Google sign-in
+- Customer, owner, and admin dashboards
+- Server-side equipment search, filtering, and sorting
+- Favorites, availability checks, and booking checkout
+- Stripe payment confirmation and payment history
+- Owner and admin analytics
+
+## Requirements
+
+- Node.js 20+
+- A running rental API
+- MongoDB for Better Auth
+- Google OAuth credentials when Google sign-in is enabled
+- ImageBB and Stripe credentials for the related services
+
+## Setup
+
+1. Copy `.env.example` to `.env.local`.
+2. Fill in the values without committing secrets.
+3. Install dependencies and start the development server:
 
 ```bash
-npx shadcn@latest add button
+npm install
+npm run dev
 ```
 
-This will place the ui components in the `components` directory.
+The application runs at `http://localhost:3000` by default.
 
-## Using components
+## Useful commands
 
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button";
+```bash
+npm run lint
+npm run typecheck
+npm run build
 ```
+
+## Main packages
+
+Next.js, React, Better Auth, MongoDB, Stripe-compatible API integration,
+Tailwind CSS, Base UI, Lucide React, and TypeScript.

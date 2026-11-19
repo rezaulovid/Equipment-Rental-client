@@ -31,36 +31,41 @@ function PaymentSuccessContent() {
   const searchParams = useSearchParams()
   const sessionId = searchParams.get("session_id")?.trim() ?? ""
   const [attempt, setAttempt] = useState(0)
-  const [state, setState] = useState<ConfirmationState>({ phase: "loading" })
+  const [state, setState] = useState<ConfirmationState>(() =>
+    sessionId ? { phase: "loading" } : { phase: "missing" }
+  )
 
   useEffect(() => {
     if (!sessionId) {
-      setState({ phase: "missing" })
       return
     }
 
     let active = true
-    setState({ phase: "loading" })
+    const timer = window.setTimeout(() => {
+      if (!active) return
+      setState({ phase: "loading" })
 
-    customerApi
-      .confirmCheckoutSession(sessionId)
-      .then((result) => {
-        if (active) setState({ phase: "done", result })
-      })
-      .catch((error) => {
-        if (active) {
-          setState({
-            phase: "error",
-            message:
-              error instanceof Error
-                ? error.message
-                : "Your payment could not be verified.",
-          })
-        }
-      })
+      customerApi
+        .confirmCheckoutSession(sessionId)
+        .then((result) => {
+          if (active) setState({ phase: "done", result })
+        })
+        .catch((error) => {
+          if (active) {
+            setState({
+              phase: "error",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Your payment could not be verified.",
+            })
+          }
+        })
+    }, 0)
 
     return () => {
       active = false
+      window.clearTimeout(timer)
     }
   }, [sessionId, attempt])
 

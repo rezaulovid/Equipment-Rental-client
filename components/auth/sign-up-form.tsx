@@ -91,6 +91,7 @@ export function SignUpForm({
   const [values, setValues] = useState<SignUpValues>(initialValues)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
 
   const passwordChecks = [
@@ -122,7 +123,7 @@ export function SignUpForm({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (loading) return
+    if (loading || googleLoading) return
 
     const payload: SignUpValues = {
       name: values.name.trim(),
@@ -149,7 +150,28 @@ export function SignUpForm({
   }
 
   function handleGoogleRegister() {
-    setNotice("Google sign up will be connected once authentication is set up.")
+    if (loading || googleLoading) return
+
+    setGoogleLoading(true)
+    void authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/",
+    }).then(({ error: signInError }) => {
+      if (signInError) {
+        setNotice(
+          signInError.message ||
+            "Google sign up failed. Please try again."
+        )
+        setGoogleLoading(false)
+      }
+    }).catch((err) => {
+      setNotice(
+        err instanceof Error
+          ? err.message
+          : "Google sign up failed. Please try again."
+      )
+      setGoogleLoading(false)
+    })
   }
 
   return (
@@ -320,11 +342,11 @@ export function SignUpForm({
 
         <Button
           type="submit"
-          disabled={loading}
+          disabled={loading || googleLoading}
           className="group h-[52px] w-full gap-2 rounded-full bg-[#FF6B00] text-[15px] font-semibold text-white shadow-[0_18px_34px_-18px_rgba(255,107,0,0.95)] hover:bg-[#E85F00] focus-visible:ring-[#FF6B00] focus-visible:ring-offset-2"
         >
-          {loading ? "Creating account..." : "Register"}
-          {!loading && (
+          {loading ? "Creating account..." : googleLoading ? "Connecting to Google..." : "Register"}
+          {!loading && !googleLoading && (
             <ArrowRight
               className="size-4 transition-transform group-hover:translate-x-0.5"
               aria-hidden="true"

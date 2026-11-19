@@ -127,9 +127,9 @@ export function BookingDialog({
     }
 
     let active = true
-    setChecking(true)
 
     const timer = setTimeout(() => {
+      setChecking(true)
       catalogApi
         .availability(equipment.id, values.startDate, values.endDate)
         .then((result) => {

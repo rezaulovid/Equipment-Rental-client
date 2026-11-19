@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, PackageSearch, RefreshCw, Search, X } from "lucide-react"
 
@@ -49,13 +49,47 @@ export function EquipmentCatalog({ initialCategory = "" }: { initialCategory?: s
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState("")
+  const [location, setLocation] = useState("")
+  const [rentalType, setRentalType] = useState<
+    "" | "daily" | "weekly" | "monthly"
+  >("")
+  const [minPrice, setMinPrice] = useState("")
+  const [maxPrice, setMaxPrice] = useState("")
+  const [availability, setAvailability] = useState<
+    "" | "available" | "unavailable"
+  >("")
+  const [sort, setSort] = useState<"recent" | "price-asc" | "price-desc">(
+    "recent"
+  )
+
+  const getFilters = useCallback(() => {
+    return {
+      q: search.trim() || undefined,
+      category: category || undefined,
+      location: location.trim() || undefined,
+      rentalType: rentalType || undefined,
+      minPrice: minPrice || undefined,
+      maxPrice: maxPrice || undefined,
+      availability: availability || undefined,
+      sort,
+    }
+  }, [
+    search,
+    category,
+    location,
+    rentalType,
+    minPrice,
+    maxPrice,
+    availability,
+    sort,
+  ])
 
   async function load() {
     setLoading(true)
     setError(null)
 
     try {
-      const data = await catalogApi.list()
+      const data = await catalogApi.list(getFilters())
       setItems(data)
 
       const requested = resolveInitialCategory(data, initialCategory)
@@ -75,7 +109,7 @@ export function EquipmentCatalog({ initialCategory = "" }: { initialCategory?: s
     let active = true
 
     catalogApi
-      .list()
+    .list(getFilters())
       .then((data) => {
         if (!active) return
         setItems(data)
@@ -99,7 +133,18 @@ export function EquipmentCatalog({ initialCategory = "" }: { initialCategory?: s
     return () => {
       active = false
     }
-  }, [initialCategory])
+  }, [
+    initialCategory,
+    search,
+    category,
+    location,
+    rentalType,
+    minPrice,
+    maxPrice,
+    availability,
+    sort,
+    getFilters,
+  ])
 
   useEffect(() => {
     if (sessionPending) return
@@ -131,22 +176,7 @@ export function EquipmentCatalog({ initialCategory = "" }: { initialCategory?: s
     [items]
   )
 
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase()
-
-    return items.filter((item) => {
-      const matchesCategory = !category || item.category === category
-      const matchesQuery =
-        !query ||
-        item.name.toLowerCase().includes(query) ||
-        item.category.toLowerCase().includes(query) ||
-        item.location.toLowerCase().includes(query) ||
-        item.brand.toLowerCase().includes(query) ||
-        item.model.toLowerCase().includes(query)
-
-      return matchesCategory && matchesQuery
-    })
-  }, [items, search, category])
+  const filtered = items
 
   const visibleFavoriteIds =
     session?.user?.role === "customer" ? favoriteIds : NO_FAVORITES
@@ -213,6 +243,77 @@ export function EquipmentCatalog({ initialCategory = "" }: { initialCategory?: s
               <X className="size-4" aria-hidden="true" />
             </button>
           ) : null}
+        </div>
+
+        <div className="mt-3 grid gap-3 rounded-2xl border border-brand-navy-line bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Input
+            value={location}
+            onChange={(event) => setLocation(event.target.value)}
+            placeholder="Filter by location"
+            aria-label="Filter by location"
+            className="h-10"
+          />
+          <select
+            value={rentalType}
+            onChange={(event) =>
+              setRentalType(
+                event.target.value as "" | "daily" | "weekly" | "monthly"
+              )
+            }
+            aria-label="Filter by rental type"
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm text-brand-navy"
+          >
+            <option value="">All rental types</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          <div className="flex gap-2">
+            <Input
+              value={minPrice}
+              onChange={(event) => setMinPrice(event.target.value)}
+              placeholder="Min price"
+              aria-label="Minimum price"
+              inputMode="decimal"
+              className="h-10"
+            />
+            <Input
+              value={maxPrice}
+              onChange={(event) => setMaxPrice(event.target.value)}
+              placeholder="Max price"
+              aria-label="Maximum price"
+              inputMode="decimal"
+              className="h-10"
+            />
+          </div>
+          <select
+            value={availability}
+            onChange={(event) =>
+              setAvailability(
+                event.target.value as "" | "available" | "unavailable"
+              )
+            }
+            aria-label="Filter by availability"
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm text-brand-navy"
+          >
+            <option value="">Any availability</option>
+            <option value="available">Available</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+          <select
+            value={sort}
+            onChange={(event) =>
+              setSort(
+                event.target.value as "recent" | "price-asc" | "price-desc"
+              )
+            }
+            aria-label="Sort equipment"
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm text-brand-navy sm:col-span-2 lg:col-span-4"
+          >
+            <option value="recent">Recently added</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+          </select>
         </div>
 
         <div className="flex items-center gap-2 text-xs text-brand-ink-soft">
