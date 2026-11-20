@@ -5,7 +5,53 @@ import { parseInputDate, rentalDurationDays, todayInputValue } from "@/lib/renta
 export type FieldErrors = Record<string, string>
 
 const PHONE_PATTERN = /^[+\d()\s.-]{6,30}$/
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const URL_PATTERN = /^https?:\/\/\S+$/i
+
+export type ContactFormValues = {
+  fullName: string
+  email: string
+  phone: string
+  subject: string
+  message: string
+}
+
+export const CONTACT_MESSAGE_MAX_LENGTH = 2000
+
+/**
+ * Shared by the contact form (client) and the contact route handler (server),
+ * so the browser and the API always agree on what a valid message looks like.
+ */
+export function validateContactForm(values: ContactFormValues): FieldErrors {
+  const errors: FieldErrors = {}
+  const fullName = values.fullName.trim()
+
+  if (fullName.length < 2 || fullName.length > 80) {
+    errors.fullName = "Full name must be between 2 and 80 characters."
+  }
+
+  const email = values.email.trim()
+  if (!EMAIL_PATTERN.test(email)) {
+    errors.email = "Enter a valid email address."
+  }
+
+  const phone = values.phone.trim()
+  if (phone && !PHONE_PATTERN.test(phone)) {
+    errors.phone = "Enter a valid phone number, or leave this blank."
+  }
+
+  const subject = values.subject.trim()
+  if (subject.length < 3 || subject.length > 120) {
+    errors.subject = "Subject must be between 3 and 120 characters."
+  }
+
+  const message = values.message.trim()
+  if (message.length < 10 || message.length > CONTACT_MESSAGE_MAX_LENGTH) {
+    errors.message = `Message must be between 10 and ${CONTACT_MESSAGE_MAX_LENGTH} characters.`
+  }
+
+  return errors
+}
 
 export function validateProfileForm(values: {
   name: string
