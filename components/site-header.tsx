@@ -209,7 +209,6 @@ export function SiteHeader() {
     { label: "All Equipment", href: "/equipment" },
     { label: "About Us", href: "/about" },
     { label: "Contact Us", href: "/contact" },
-    { label: "Dashboard", href: `/dashboard/${session?.user.role || "customer"}` },
   ]
 
   const isLoggedIn = Boolean(session?.user)
@@ -278,7 +277,7 @@ export function SiteHeader() {
         </NavigationMenu>
 
         <div className="ml-auto hidden items-center gap-2.5 min-[1660px]:flex">
-          <DashboardButton />
+          {isLoggedIn ? <DashboardButton /> : null}
           <SaasButton />
           {isLoggedIn ? (
             <LogoutButton onClick={handleLogout} disabled={isSigningOut} />
@@ -349,7 +348,7 @@ export function SiteHeader() {
 
             <SheetFooter className="gap-3 border-t border-[#E4E9F2] px-5 py-5">
               <div className="flex items-center gap-2.5">
-                <DashboardButton className="h-11 flex-1" />
+                {isLoggedIn ? <DashboardButton className="h-11 flex-1" /> : null}
                 <SaasButton className="size-11" />
                 {isLoggedIn ? (
                   <LogoutButton
