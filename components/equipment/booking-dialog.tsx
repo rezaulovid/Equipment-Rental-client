@@ -216,6 +216,11 @@ export function BookingDialog({
       return
     }
 
+    submittingRef.current = true
+    setSubmitting(true)
+    setFormError(null)
+    showPreparingPaymentToast()
+
     // Validate every detail before touching Stripe so the customer can fix
     // problems inside this modal.
     const nextErrors = validateBookingForm(values, maxQuantity)
@@ -223,13 +228,10 @@ export function BookingDialog({
 
     if (Object.keys(nextErrors).length > 0) {
       showBookingValidationToasts(nextErrors)
+      setSubmitting(false)
+      submittingRef.current = false
       return
     }
-
-    submittingRef.current = true
-    setSubmitting(true)
-    setFormError(null)
-    showPreparingPaymentToast()
 
     try {
       const result = await customerApi.createBooking(

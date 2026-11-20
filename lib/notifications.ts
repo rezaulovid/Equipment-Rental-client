@@ -165,8 +165,7 @@ function mapServerMessage(message: string): ValidationToast | null {
 export function showBookingRequestError(error: unknown) {
   const message = error instanceof Error ? error.message : ""
   const status = error instanceof ApiError ? error.status : 0
-  const isValidationStatus =
-    status === 400 || status === 409 || status === 422
+  const isValidationStatus = status === 400 || status === 409 || status === 422
 
   if (isValidationStatus) {
     const mapped = mapServerMessage(message)
@@ -183,7 +182,7 @@ export function showBookingRequestError(error: unknown) {
 export function showPaymentVerifyingToast() {
   toast.info("Your payment is being verified. Please wait.", {
     id: PAYMENT_STATUS_TOAST_ID,
-    duration: Infinity,
+    duration: RESULT_DURATION,
   })
 }
 
@@ -212,7 +211,7 @@ export function showPaymentFailedToast() {
 export function showPaymentProcessingToast() {
   toast.info("Your payment is being verified. Please wait.", {
     id: PAYMENT_STATUS_TOAST_ID,
-    duration: Infinity,
+    duration: RESULT_DURATION,
   })
 }
 

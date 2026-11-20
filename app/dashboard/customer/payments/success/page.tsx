@@ -99,7 +99,10 @@ function PaymentSuccessContent() {
       return
     }
 
-    if (result.paymentStatus === "failed" || result.sessionStatus === "expired") {
+    if (
+      result.paymentStatus === "failed" ||
+      result.sessionStatus === "expired"
+    ) {
       showPaymentFailedToast()
       return
     }
