@@ -15,6 +15,7 @@ export type CatalogFilters = {
   maxPrice?: string
   availability?: "available" | "unavailable"
   sort?: "price-asc" | "price-desc" | "recent"
+  limit?: string
 }
 
 function queryString(params: Record<string, string | undefined>) {
@@ -34,6 +35,9 @@ export const catalogApi = {
     publicApiRequest<CatalogEquipment[]>(
       `/api/equipment${queryString(filters)}`
     ),
+
+  categories: () =>
+    publicApiRequest<string[]>("/api/equipment/categories"),
 
   get: (id: string) =>
     publicApiRequest<CatalogEquipment>(`/api/equipment/${encodeURIComponent(id)}`),

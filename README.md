@@ -9,10 +9,13 @@ users, approvals, rentals, and platform analytics.
 
 - Better Auth email/password and Google sign-in
 - Customer, owner, and admin dashboards
+- Six newest approved equipment listings loaded from the rental API
 - Server-side equipment search, filtering, and sorting
-- Favorites, availability checks, and booking checkout
+- Persistent favorites, availability checks, and booking checkout
 - Stripe payment confirmation and payment history
+- Verified customer reviews for paid, completed rentals
 - Owner and admin analytics
+- Framer Motion animations with reduced-motion support
 
 ## Requirements
 
@@ -46,4 +49,4 @@ npm run build
 ## Main packages
 
 Next.js, React, Better Auth, MongoDB, Stripe-compatible API integration,
-Tailwind CSS, Base UI, Lucide React, and TypeScript.
+Tailwind CSS, Base UI, Lucide React, Framer Motion, and TypeScript.

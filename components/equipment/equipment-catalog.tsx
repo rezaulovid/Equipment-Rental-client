@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, PackageSearch, RefreshCw, Search, X } from "lucide-react"
 
@@ -44,7 +44,16 @@ export function EquipmentCatalog({ initialCategory = "" }: { initialCategory?: s
   const router = useRouter()
   const { data: session, isPending: sessionPending } = useSession()
   const [items, setItems] = useState<CatalogEquipment[]>([])
-  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
+  const [categories, setCategories] = useState<string[]>([])
+  const [categoryError, setCategoryError] = useState<string | null>(null)
+  const [favoriteData, setFavoriteData] = useState<{
+    customerId: string
+    ids: Set<string>
+  } | null>(null)
+  const [favoriteErrorData, setFavoriteErrorData] = useState<{
+    customerId: string
+    message: string
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
@@ -61,6 +70,16 @@ export function EquipmentCatalog({ initialCategory = "" }: { initialCategory?: s
   const [sort, setSort] = useState<"recent" | "price-asc" | "price-desc">(
     "recent"
   )
+  const customerId =
+    session?.user?.role === "customer" ? session.user.id : null
+  const favoriteIds =
+    customerId && favoriteData?.customerId === customerId
+      ? favoriteData.ids
+      : NO_FAVORITES
+  const favoriteError =
+    customerId && favoriteErrorData?.customerId === customerId
+      ? favoriteErrorData.message
+      : null
 
   const getFilters = useCallback(() => {
     return {
@@ -109,7 +128,30 @@ export function EquipmentCatalog({ initialCategory = "" }: { initialCategory?: s
     let active = true
 
     catalogApi
-    .list(getFilters())
+      .categories()
+      .then((values) => {
+        if (active) setCategories(values)
+      })
+      .catch((err) => {
+        if (active) {
+          setCategoryError(
+            err instanceof Error
+              ? err.message
+              : "Equipment categories could not be loaded."
+          )
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    catalogApi
+      .list(getFilters())
       .then((data) => {
         if (!active) return
         setItems(data)
@@ -147,46 +189,49 @@ export function EquipmentCatalog({ initialCategory = "" }: { initialCategory?: s
   ])
 
   useEffect(() => {
-    if (sessionPending) return
-    if (!session?.user || session.user.role !== "customer") {
-      return
-    }
+    if (sessionPending || !customerId) return
 
     let active = true
 
     favoritesApi
       .ids()
       .then((ids) => {
-        if (active) setFavoriteIds(new Set(ids))
+        if (active) {
+          setFavoriteData({ customerId, ids: new Set(ids) })
+          setFavoriteErrorData(null)
+        }
       })
-      .catch(() => {
-        if (active) setFavoriteIds(new Set())
+      .catch((err) => {
+        if (active) {
+          setFavoriteErrorData({
+            customerId,
+            message:
+              err instanceof Error
+                ? err.message
+                : "Saved favorites could not be loaded.",
+          })
+        }
       })
 
     return () => {
       active = false
     }
-  }, [sessionPending, session?.user])
-
-  const categories = useMemo(
-    () =>
-      [...new Set(items.map((item) => item.category).filter(Boolean))].sort(
-        (a, b) => a.localeCompare(b)
-      ),
-    [items]
-  )
+  }, [sessionPending, customerId])
 
   const filtered = items
 
-  const visibleFavoriteIds =
-    session?.user?.role === "customer" ? favoriteIds : NO_FAVORITES
+  const visibleFavoriteIds = favoriteIds
 
   function handleFavoriteChange(equipmentId: string, favorite: boolean) {
-    setFavoriteIds((current) => {
-      const next = new Set(current)
+    if (!customerId) return
+
+    setFavoriteData((current) => {
+      const next = new Set<string>(
+        current?.customerId === customerId ? current.ids : []
+      )
       if (favorite) next.add(equipmentId)
       else next.delete(equipmentId)
-      return next
+      return { customerId, ids: next }
     })
   }
 
@@ -322,6 +367,17 @@ export function EquipmentCatalog({ initialCategory = "" }: { initialCategory?: s
         </div>
       </div>
 
+      {categoryError ? (
+        <p role="alert" className="mt-4 text-sm text-red-700">
+          {categoryError}
+        </p>
+      ) : null}
+      {favoriteError ? (
+        <p role="alert" className="mt-4 text-sm text-red-700">
+          Saved favorites could not be synchronized: {favoriteError}
+        </p>
+      ) : null}
+
       {categories.length > 0 ? (
         <div className="mt-4 flex flex-wrap gap-2">
           <button
@@ -370,7 +426,7 @@ export function EquipmentCatalog({ initialCategory = "" }: { initialCategory?: s
             </div>
           </Alert>
         ) : loading ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
@@ -413,7 +469,7 @@ export function EquipmentCatalog({ initialCategory = "" }: { initialCategory?: s
             )}
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((equipment) => (
               <EquipmentCard
                 key={equipment.id}

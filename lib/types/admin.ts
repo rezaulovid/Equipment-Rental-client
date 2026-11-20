@@ -19,10 +19,10 @@ export type AdminUser = {
   createdAt: string | null
 }
 
-export type AdminProfile = Pick<
-  AdminUser,
-  "id" | "name" | "email" | "image" | "phone" | "address"
-> & { role: UserRole }
+export type AdminProfile = Omit<
+  Pick<AdminUser, "id" | "name" | "email" | "image" | "phone" | "address">,
+  "phone" | "address"
+> & { role: UserRole; phone: string | null; address: string | null }
 
 export type AdminEquipment = {
   id: string

@@ -1,12 +1,4 @@
-import type { Equipment, EquipmentCategory } from "@/lib/types/equipment"
-
-/**
- * Temporary homepage content.
- *
- * The equipment API is not wired up yet, so these typed collections keep the
- * presentation layer ready for a future server-side fetch. Replace these
- * exports with data returned from the equipment endpoints once available.
- */
+import type { EquipmentCategory } from "@/lib/types/equipment"
 
 export const popularCategories: EquipmentCategory[] = [
   {
@@ -53,92 +45,5 @@ export const popularCategories: EquipmentCategory[] = [
     itemCount: 2,
     image: "/images/categories/event.jpg",
     imageAlt: "Live event stage with colourful lighting",
-  },
-]
-
-export const featuredEquipment: Equipment[] = [
-  {
-    id: "toyota-corolla",
-    slug: "toyota-corolla",
-    name: "Toyota Corolla",
-    category: "Vehicles & Transportation",
-    image: "/images/equipment/toyota-corolla.jpg",
-    imageAlt: "Red Toyota Corolla parked on a tree-lined road",
-    rating: 4.7,
-    reviewCount: 120,
-    location: "Sylhet, Bangladesh",
-    price: 70,
-    rentalPeriod: "day",
-    availability: "available",
-  },
-  {
-    id: "canon-dslr-camera",
-    slug: "canon-dslr-camera",
-    name: "Canon DSLR Camera",
-    category: "Photography Equipment",
-    image: "/images/equipment/canon-dslr-camera.jpg",
-    imageAlt: "Canon DSLR camera with two extra lenses",
-    rating: 4.6,
-    reviewCount: 95,
-    location: "Chattogram, Bangladesh",
-    price: 50,
-    rentalPeriod: "day",
-    availability: "available",
-  },
-  {
-    id: "excavator-machine",
-    slug: "excavator-machine",
-    name: "Excavator Machine",
-    category: "Construction Equipment",
-    image: "/images/equipment/excavator-machine.jpg",
-    imageAlt: "Yellow excavators digging on a construction site",
-    rating: 4.8,
-    reviewCount: 64,
-    location: "Dhaka, Bangladesh",
-    price: 150,
-    rentalPeriod: "day",
-    availability: "available",
-  },
-  {
-    id: "professional-cleaning-kit",
-    slug: "professional-cleaning-kit",
-    name: "Professional Cleaning Kit",
-    category: "Cleaning Equipment",
-    image: "/images/equipment/cleaning-equipment.jpg",
-    imageAlt: "Professional cleaner using a cleaning kit",
-    rating: 4.8,
-    reviewCount: 102,
-    location: "Dhaka, Bangladesh",
-    price: 35,
-    rentalPeriod: "week",
-    availability: "available",
-  },
-  {
-    id: "concrete-mixer",
-    slug: "concrete-mixer",
-    name: "Concrete Mixer",
-    category: "Construction Equipment",
-    image: "/images/equipment/concrete-mixer.jpg",
-    imageAlt: "Portable concrete mixer in use on a job site",
-    rating: 4.7,
-    reviewCount: 90,
-    location: "Dhaka, Bangladesh",
-    price: 90,
-    rentalPeriod: "day",
-    availability: "available",
-  },
-  {
-    id: "camping-tent",
-    slug: "camping-tent",
-    name: "Camping Tent",
-    category: "Event Equipment",
-    image: "/images/equipment/camping-tent.jpg",
-    imageAlt: "Spacious camping tent pitched in a forest",
-    rating: 4.8,
-    reviewCount: 16,
-    location: "Sylhet, Bangladesh",
-    price: 80,
-    rentalPeriod: "day",
-    availability: "available",
   },
 ]

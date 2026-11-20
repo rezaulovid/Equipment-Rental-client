@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { ReviewForm } from "@/components/dashboard/customer/review-form"
 import {
   Dialog,
   DialogContent,
@@ -155,6 +156,11 @@ export function RentalDetailsDialog({
               ) : null}
             </dl>
           </div>
+        ) : null}
+
+        {rental?.bookingStatus === "completed" &&
+        rental.paymentStatus === "paid" ? (
+          <ReviewForm bookingId={rental.id} />
         ) : null}
 
         <DialogFooter>

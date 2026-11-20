@@ -25,9 +25,9 @@ export function OwnerProfileForm({
 }) {
   const { refetch } = useSession()
   const [form, setForm] = useState({
-    name: profile.name,
-    phone: profile.phone,
-    address: profile.address,
+    name: profile.name ?? "",
+    phone: profile.phone ?? "",
+    address: profile.address ?? "",
     image: profile.image ?? "",
   })
   const [errors, setErrors] = useState<FieldErrors>({})
