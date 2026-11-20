@@ -10,9 +10,9 @@ import { stripe } from '@/lib/stripe';
 import { NextResponse } from "next/server"
 import { headers } from "next/headers"
 
-import { stripe } from "@/lib/stripe"
+import {stripe} from "@/lib/stripe"
 import { auth } from "@/lib/auth"
-import { PREMIUM_PLAN } from "@/lib/plans"
+
 
 export async function POST(request: Request) {
     try {
