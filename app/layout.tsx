@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Poppins } from "next/font/google"
 import "./globals.css"
 import { SiteFooter } from "@/components/site-footer"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
 import { cn } from "@/lib/utils"
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
@@ -41,6 +42,7 @@ export default function RootLayout({
             <div className="flex flex-1 flex-col">{children}</div>
             <SiteFooter />
           </div>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

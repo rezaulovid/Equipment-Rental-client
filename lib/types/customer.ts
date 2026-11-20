@@ -135,6 +135,16 @@ export type CheckoutConfirmation = {
   bookingId: string
   paymentStatus: PaymentStatus
   updated: boolean
+  equipmentName?: string
+  equipmentImage?: string
+  startDate?: string | null
+  endDate?: string | null
+  durationDays?: number
+  billableUnits?: number
+  rentalType?: RentalType
+  quantity?: number
+  paidAt?: string | null
+  transactionId?: string | null
 }
 
 export type ProfileUpdateInput = {

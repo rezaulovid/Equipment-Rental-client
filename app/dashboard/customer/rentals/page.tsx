@@ -15,6 +15,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { customerApi } from "@/lib/api/customer"
+import {
+  showBookingRequestError,
+  showPreparingPaymentToast,
+  showRedirectingToPaymentToast,
+} from "@/lib/notifications"
 import type { CustomerRental } from "@/lib/types/customer"
 import { useApiQuery } from "@/hooks/use-api-query"
 import { CustomerPageHeader } from "../_components/customer-page-header"
@@ -78,9 +83,14 @@ export default function CustomerRentalsPage() {
 
     setNotice(null)
     setPayingId(rental.id)
+    showPreparingPaymentToast()
 
     try {
       const result = await customerApi.retryCheckout(rental.id)
+      if (!result.checkoutUrl) {
+        throw new Error("Stripe did not return a checkout link.")
+      }
+      showRedirectingToPaymentToast()
       window.location.assign(result.checkoutUrl)
     } catch (err) {
       setNotice({
@@ -90,6 +100,7 @@ export default function CustomerRentalsPage() {
             ? err.message
             : "The payment could not be started.",
       })
+      showBookingRequestError(err)
       setPayingId(null)
     }
   }

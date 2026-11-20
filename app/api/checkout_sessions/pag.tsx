@@ -1,5 +1,4 @@
 import React from 'react';
-improt {PaymentPage} from './payment/page';
 const CheckoutSuccessPage = () => {
     return (
         <div>

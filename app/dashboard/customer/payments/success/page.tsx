@@ -17,8 +17,15 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { customerApi } from "@/lib/api/customer"
+import {
+  showPaymentFailedToast,
+  showPaymentProcessingToast,
+  showPaymentSuccessToast,
+  showPaymentVerificationErrorToast,
+  showPaymentVerifyingToast,
+} from "@/lib/notifications"
 import type { CheckoutConfirmation } from "@/lib/types/customer"
-import { formatCurrency } from "@/lib/rental"
+import { formatCurrency, formatDate } from "@/lib/rental"
 import { ErrorPanel } from "../../_components/state-panels"
 
 type ConfirmationState =
@@ -69,6 +76,37 @@ function PaymentSuccessContent() {
     }
   }, [sessionId, attempt])
 
+  // Toast the verified Stripe result. The success message is only shown after
+  // the API confirms the payment with Stripe, never from the URL alone.
+  useEffect(() => {
+    if (state.phase === "loading") {
+      showPaymentVerifyingToast()
+      return
+    }
+
+    if (state.phase === "error") {
+      showPaymentVerificationErrorToast()
+      return
+    }
+
+    if (state.phase !== "done") return
+
+    const { result } = state
+    const isPaid = result.paymentStatus === "paid" || result.status === "paid"
+
+    if (isPaid) {
+      showPaymentSuccessToast()
+      return
+    }
+
+    if (result.paymentStatus === "failed" || result.sessionStatus === "expired") {
+      showPaymentFailedToast()
+      return
+    }
+
+    showPaymentProcessingToast()
+  }, [state])
+
   if (state.phase === "loading") {
     return (
       <Card className="w-full max-w-lg p-8 text-center">
@@ -114,7 +152,7 @@ function PaymentSuccessContent() {
           </Button>
           <Button
             variant="outline"
-            render={<Link href="/equipment" />}
+            render={<Link href="/" />}
             nativeButton={false}
           >
             Browse equipment
@@ -173,14 +211,60 @@ function PaymentSuccessContent() {
           <CheckCircle2 className="size-7" aria-hidden="true" />
         </span>
         <h1 className="mt-5 font-display text-2xl font-bold tracking-[-0.02em] text-brand-navy">
-          Payment confirmed
+          Payment Successful!
         </h1>
         <p className="mt-2 text-sm leading-6 text-brand-ink-soft">
-          Thank you! Your rental is now active and its payment status has been
-          updated from Stripe&apos;s verified response.
+          Thank you! Your payment has been successfully processed and your
+          booking is confirmed.
         </p>
 
+        {result.equipmentImage ? (
+          <img
+            src={result.equipmentImage}
+            alt={result.equipmentName || "Equipment"}
+            className="mt-5 h-36 w-full rounded-xl object-cover"
+          />
+        ) : null}
+
         <dl className="mt-6 space-y-2 rounded-xl border border-brand-navy-line bg-brand-navy-tint/50 p-4 text-left text-sm">
+          {result.equipmentName ? (
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-brand-ink-soft">Equipment</dt>
+              <dd className="font-semibold text-brand-navy">{result.equipmentName}</dd>
+            </div>
+          ) : null}
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-brand-ink-soft">Rental period</dt>
+            <dd className="font-semibold text-brand-navy">
+              {formatDate(result.startDate)} – {formatDate(result.endDate)}
+            </dd>
+          </div>
+          {result.quantity ? (
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-brand-ink-soft">Quantity</dt>
+              <dd className="font-semibold text-brand-navy">{result.quantity}</dd>
+            </div>
+          ) : null}
+          {result.durationDays ? (
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-brand-ink-soft">Rental duration</dt>
+              <dd className="font-semibold text-brand-navy">
+                {result.durationDays} day{result.durationDays === 1 ? "" : "s"}
+              </dd>
+            </div>
+          ) : null}
+          {result.transactionId ? (
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-brand-ink-soft">Transaction ID</dt>
+              <dd className="max-w-[180px] truncate font-mono text-xs text-brand-navy">{result.transactionId}</dd>
+            </div>
+          ) : null}
+          {result.paidAt ? (
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-brand-ink-soft">Payment date</dt>
+              <dd className="font-semibold text-brand-navy">{formatDate(result.paidAt)}</dd>
+            </div>
+          ) : null}
           <div className="flex items-center justify-between gap-3">
             <dt className="text-brand-ink-soft">Amount paid</dt>
             <dd className="font-semibold text-brand-navy">
@@ -219,7 +303,7 @@ function PaymentSuccessContent() {
             nativeButton={false}
           >
             <Package className="size-4" aria-hidden="true" />
-            Keep browsing
+            Back to Home
           </Button>
         </div>
       </Card>

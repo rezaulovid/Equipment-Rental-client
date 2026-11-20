@@ -1,4 +1,4 @@
-import { apiRequest } from "@/lib/api/http"
+import { ApiError, apiRequest } from "@/lib/api/http"
 import type {
   BookingInput,
   CheckoutConfirmation,
@@ -9,6 +9,28 @@ import type {
   CustomerRental,
   ProfileUpdateInput,
 } from "@/lib/types/customer"
+
+async function sameOriginRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await fetch(path, {
+    ...init,
+    credentials: "include",
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  })
+  const payload = await response.json().catch(() => null) as
+    | { success?: boolean; data?: T; message?: string }
+    | null
+  if (!response.ok || !payload || payload.success === false) {
+    throw new ApiError(
+      response.status,
+      payload?.message ?? "Unable to complete the request."
+    )
+  }
+  return payload.data as T
+}
 
 /**
  * Typed customer API service. The Express API derives the customer id from the
@@ -33,25 +55,25 @@ export const customerApi = {
     }),
 
   createBooking: (input: BookingInput) =>
-    apiRequest<CheckoutResponse>("/api/bookings", {
+    sameOriginRequest<CheckoutResponse>("/api/bookings", {
       method: "POST",
       body: JSON.stringify(input),
     }),
 
   retryCheckout: (bookingId: string) =>
-    apiRequest<CheckoutResponse>(`/api/bookings/${bookingId}/checkout`, {
+    sameOriginRequest<CheckoutResponse>(`/api/bookings/${bookingId}/checkout`, {
       method: "POST",
       body: JSON.stringify({}),
     }),
 
   cancelBooking: (bookingId: string) =>
-    apiRequest<{ id: string; bookingStatus: string }>(
+    sameOriginRequest<{ id: string; bookingStatus: string }>(
       `/api/bookings/${bookingId}/cancel`,
       { method: "POST", body: JSON.stringify({}) }
     ),
 
   confirmCheckoutSession: (sessionId: string) =>
-    apiRequest<CheckoutConfirmation>(
+    sameOriginRequest<CheckoutConfirmation>(
       `/api/payments/session/${encodeURIComponent(sessionId)}`
     ),
 }

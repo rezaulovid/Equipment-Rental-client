@@ -15,6 +15,13 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { customerApi } from "@/lib/api/customer"
+import {
+  dismissPaymentStatusToast,
+  showBookingRequestError,
+  showPaymentCancelledToast,
+  showPreparingPaymentToast,
+  showRedirectingToPaymentToast,
+} from "@/lib/notifications"
 
 type CancelState =
   | { phase: "loading" }
@@ -26,42 +33,36 @@ function PaymentCancelledContent() {
   const searchParams = useSearchParams()
   const bookingId = searchParams.get("booking_id")?.trim() ?? ""
   const [state, setState] = useState<CancelState>(() =>
-    bookingId ? { phase: "loading" } : { phase: "missing" }
+    bookingId ? { phase: "done" } : { phase: "missing" }
   )
+  const [retrying, setRetrying] = useState(false)
 
+  // Sonner uses a stable id, so revisiting this page never stacks duplicates.
   useEffect(() => {
-    if (!bookingId) {
-      return
+    showPaymentCancelledToast()
+  }, [])
+
+  async function retryPayment() {
+    if (!bookingId || retrying) return
+    setRetrying(true)
+    dismissPaymentStatusToast()
+    showPreparingPaymentToast()
+    try {
+      const result = await customerApi.retryCheckout(bookingId)
+      if (!result.checkoutUrl) {
+        throw new Error("Stripe did not return a checkout link.")
+      }
+      showRedirectingToPaymentToast()
+      window.location.assign(result.checkoutUrl)
+    } catch (error) {
+      setState({
+        phase: "error",
+        message: error instanceof Error ? error.message : "Payment could not be restarted.",
+      })
+      showBookingRequestError(error)
+      setRetrying(false)
     }
-
-    let active = true
-    const timer = window.setTimeout(() => {
-      if (!active) return
-      setState({ phase: "loading" })
-
-      customerApi
-        .cancelBooking(bookingId)
-        .then(() => {
-          if (active) setState({ phase: "done" })
-        })
-        .catch((error) => {
-          if (active) {
-            setState({
-              phase: "error",
-              message:
-                error instanceof Error
-                  ? error.message
-                  : "The booking could not be released.",
-            })
-          }
-        })
-    }, 0)
-
-    return () => {
-      active = false
-      window.clearTimeout(timer)
-    }
-  }, [bookingId])
+  }
 
   if (state.phase === "loading") {
     return (
@@ -154,13 +155,23 @@ function PaymentCancelledContent() {
         <XCircle className="size-6" aria-hidden="true" />
       </span>
       <h1 className="mt-5 font-display text-xl font-semibold text-brand-navy">
-        Checkout cancelled
+        Payment Cancelled
       </h1>
       <p className="mt-2 text-sm leading-6 text-brand-ink-soft">
-        No payment was taken and the held equipment has been released. You can
-        start a new booking whenever you are ready.
+        No payment was taken. Your pending booking is preserved so you can retry
+        payment whenever you are ready.
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-2">
+        {bookingId ? (
+          <Button
+            className="gap-2 bg-brand-orange text-white hover:bg-brand-orange-strong"
+            onClick={() => void retryPayment()}
+            disabled={retrying}
+          >
+            <RefreshCw className={`size-4 ${retrying ? "animate-spin" : ""}`} aria-hidden="true" />
+            {retrying ? "Opening Stripe…" : "Retry payment"}
+          </Button>
+        ) : null}
         <Button
           className="gap-2 bg-brand-orange text-white hover:bg-brand-orange-strong"
           render={<Link href="/equipment" />}

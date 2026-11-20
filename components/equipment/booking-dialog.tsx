@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -30,6 +30,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { catalogApi } from "@/lib/api/catalog"
 import { customerApi } from "@/lib/api/customer"
 import { useSession } from "@/lib/auth-client"
+import {
+  showBookingRequestError,
+  showBookingValidationToasts,
+  showPreparingPaymentToast,
+  showRedirectingToPaymentToast,
+} from "@/lib/notifications"
 import {
   estimateRentalTotal,
   formatCurrency,
@@ -83,6 +89,8 @@ export function BookingDialog({
   const [availability, setAvailability] =
     useState<EquipmentAvailability | null>(null)
   const [checking, setChecking] = useState(false)
+  // Guards against a second submit before the disabled state re-renders.
+  const submittingRef = useRef(false)
 
   const isCustomer = session?.user?.role === "customer"
   const customerId = isCustomer ? session?.user?.id : undefined
@@ -194,7 +202,7 @@ export function BookingDialog({
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (submitting) return
+    if (submitting || submittingRef.current) return
 
     if (!session?.user) {
       router.push(
@@ -208,15 +216,22 @@ export function BookingDialog({
       return
     }
 
+    // Validate every detail before touching Stripe so the customer can fix
+    // problems inside this modal.
     const nextErrors = validateBookingForm(values, maxQuantity)
     setErrors(nextErrors)
 
-    if (Object.keys(nextErrors).length > 0) return
+    if (Object.keys(nextErrors).length > 0) {
+      showBookingValidationToasts(nextErrors)
+      return
+    }
+
+    submittingRef.current = true
+    setSubmitting(true)
+    setFormError(null)
+    showPreparingPaymentToast()
 
     try {
-      setSubmitting(true)
-      setFormError(null)
-
       const result = await customerApi.createBooking(
         buildBookingInput(equipment.id, values)
       )
@@ -224,6 +239,8 @@ export function BookingDialog({
       if (!result.checkoutUrl) {
         throw new Error("Stripe did not return a checkout link.")
       }
+
+      showRedirectingToPaymentToast()
 
       // Redirect to Stripe Checkout. The API verifies the amount again before
       // creating the session, and the webhook confirms the payment later.
@@ -234,7 +251,9 @@ export function BookingDialog({
           ? error.message
           : "Your booking could not be created."
       )
+      showBookingRequestError(error)
       setSubmitting(false)
+      submittingRef.current = false
     }
   }
 
